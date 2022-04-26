@@ -54,7 +54,7 @@ epochs: 1
 Whenever you make updates to the client code (such as altering any of the settings in the above mentioned file), you need to re-package the compute package:
 
 ```bash
-tar -czvf package.tar.gz client
+tar -czvf package_old.tar.gz client
 ```
 To clear the system and set a new compute package, see: https://github.com/scaleoutsystems/fedn/blob/master/docs/FAQ.md
 

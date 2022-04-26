@@ -1,11 +1,10 @@
 import sys
-from data.read_data import read_data
+from read_data import read_data
 import json
 import yaml
 import torch
-import os
 import collections
-import pickle
+
 
 def np_to_weights(weights_np):
     weights = collections.OrderedDict()
@@ -13,7 +12,7 @@ def np_to_weights(weights_np):
         weights[w] = torch.tensor(weights_np[w])
     return weights
 
-def validate(model, data, settings):
+def validate(model, data,loss, settings):
     print("-- RUNNING VALIDATION --", flush=True)
     # The data, split between train and test sets. We are caching the partition in 
     # the container home dir so that the same data subset is used for 
@@ -42,8 +41,8 @@ def validate(model, data, settings):
                 # pred = output.argmax(dim=1, keepdim=True)
                 # train_correct += pred.eq(y.view_as(pred)).sum().item()
             train_loss /= batch_size
-            # train_acc = train_correct / len(dataloader.dataset)
-        return float(train_loss), float(0)
+            train_acc = train_correct / len(dataloader.dataset)
+        return float(train_loss), float(train_acc)
 
     # # Load train data
     # try:
@@ -108,9 +107,10 @@ if __name__ == '__main__':
     from models.pytorch_model import create_seed_model
     helper = PytorchHelper()
     model, loss, optimizer = create_seed_model(settings)
+    print('=========================SADI ======================================= Model Validation')
     model.load_state_dict(np_to_weights(helper.load_model(sys.argv[1])))
 
-    report = validate(model,'../data/test.csv', settings)
+    report = validate(model,'../data/test.csv',loss, settings)
 
     with open(sys.argv[2], "w") as fh:
         fh.write(json.dumps(report))

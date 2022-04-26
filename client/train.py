@@ -2,11 +2,9 @@ from __future__ import print_function
 import sys
 import yaml
 import torch
-import os
 import collections
-import pickle
 
-from data.read_data import read_data
+from read_data import read_data
 
 def weights_to_np(weights):
 
@@ -48,6 +46,7 @@ def train(model, loss, optimizer, data, settings):
     #     except:
     #         pass
 
+    print('=========================SADI ======================================= Model Load')
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=settings['batch_size'], shuffle=True)
 
     model.train()
@@ -87,6 +86,7 @@ if __name__ == '__main__':
     from models.pytorch_model import create_seed_model
     helper = PytorchHelper()
     model, loss, optimizer = create_seed_model(settings)
+    print('=========================SADI ======================================= Model Created')
     model.load_state_dict(np_to_weights(helper.load_model(sys.argv[1])))
     model = train(model, loss, optimizer, '../data/train.csv', settings)
     helper.save_model(weights_to_np(model.state_dict()), sys.argv[2])
