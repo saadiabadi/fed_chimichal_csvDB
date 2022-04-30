@@ -23,28 +23,29 @@ def np_to_weights(weights_np):
 
 def train(model, loss, optimizer, data, settings):
     print("-- RUNNING TRAINING --", flush=True)
-    trainset = read_data(data)
+
 
     # We are caching the partition in the container home dir so that
     # the same training subset is used for each iteration for a client. 
-    # try:
-    #     with open('/tmp/local_dataset/trainset.p','rb') as fh:
-    #         trainset = pickle.loads(fh.read())
-    #     print("load local trainset")
-    #
-    # except:
-    #     trainset = read_data(trainset=True, nr_examples=settings['training_samples'],  data_path='../data/nmrshift.npz')
-    #     print("sample new local trainset")
-    #
-    #     try:
-    #         if not os.path.isdir('/tmp/local_dataset'):
-    #             os.mkdir('/tmp/local_dataset')
-    #
-    #         with open('/tmp/local_dataset/trainset.p','wb') as fh:
-    #             fh.write(pickle.dumps(trainset))
-    #
-    #     except:
-    #         pass
+    try:
+        with open('/tmp/local_dataset/trainset.p','rb') as fh:
+            trainset = pickle.loads(fh.read())
+        print("load local trainset")
+
+    except:
+        trainset = read_data(data)
+        # trainset = read_data(trainset=True, nr_examples=settings['training_samples'],  data_path='../data/nmrshift.npz')
+        print("sample new local trainset")
+
+        try:
+            if not os.path.isdir('/tmp/local_dataset'):
+                os.mkdir('/tmp/local_dataset')
+
+            with open('/tmp/local_dataset/trainset.p','wb') as fh:
+                fh.write(pickle.dumps(trainset))
+
+        except:
+            pass
 
     print('=========================SADI ======================================= Model Load')
     train_loader = torch.utils.data.DataLoader(trainset, batch_size=settings['batch_size'], shuffle=True)
