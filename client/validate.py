@@ -32,6 +32,7 @@ def validate(model, data, settings):
         train_loss = 0
         train_loss1 = 0
         train_correct = 0
+        predictions, actuals = list(), list()
         with torch.no_grad():
             for x, y in dataloader:
     
@@ -42,13 +43,16 @@ def validate(model, data, settings):
 
                 output = model.forward(x_float)
 
-                print('###################################################################################')
-                print(type(output))
-                print(type(y))
-                print('###################################################################################')
-                print(output)
-                print('###################################################################################')
-                
+                output1 = torch.squeeze(output['shift_mu'], 2)
+                yhat = output1.detach().numpy()
+                yhat = yhat[:, 0]
+                actual = np.array(y)
+                # actual = actual.reshape((len(actual), 1))
+
+                predictions.append(yhat)
+                actuals.append(actual)
+
+
                 input = torch.zeros((batch_size, 128), dtype=torch.float32)
                 input_mask = torch.zeros((batch_size, 128), dtype=torch.int32)
                 for i, row in enumerate(x1):
@@ -61,14 +65,17 @@ def validate(model, data, settings):
                 # pred = output.argmax(dim=1, keepdim=True)
                 # train_correct += pred.eq(y.view_as(pred)).sum().item()
 
+            predictions, actuals = np.hstack(predictions), np.vstack(actuals)
+            predictions= np.transpose(predictions)
+            predictions = predictions.reshape((len(predictions), 1))
 
-                output1 = torch.squeeze(output['shift_mu'], 2)
-                # r2 = r2_loss(output1, y)
-                # r2.backward()
-                mse = mean_squared_error(np.array(y), np.array(output1)[:, 0])
-                rmse = mean_squared_error(np.array(y), np.array(output1)[:, 0], squared=False)
-                r_square = r2_score(np.array(y), np.array(output1)[:, 0])
-                mae=mean_absolute_error(np.array(y), np.array(output1)[:, 0])
+
+            # r2 = r2_loss(output1, y)
+            # r2.backward()
+            mse = mean_squared_error(actuals, predictions)
+            rmse = mean_squared_error(actuals, predictions, squared=False)
+            r_square = r2_score(actuals, predictions)
+            mae=mean_absolute_error(actuals, predictions)
 
             train_loss /= batch_size
             train_loss /= len(dataloader.dataset)
