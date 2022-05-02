@@ -5,6 +5,7 @@ import yaml
 import torch
 import collections
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+import numpy as np
 
 
 def np_to_weights(weights_np):
@@ -31,20 +32,22 @@ def validate(model, data, settings):
         train_loss = 0
         train_loss1 = 0
         train_correct = 0
-        batch_size = 32
         with torch.no_grad():
             for x, y in dataloader:
     
-                batch_size1 = x.shape[0]
-                print('---------------------------------------------------------------------------')
-                print('                     BATCH SIZE =  %g                         '%batch_size1 )
-                print('---------------------------------------------------------------------------')
-                # x = torch.squeeze(x, 1)
+                batch_size = x.shape[0]
+                x = torch.squeeze(x, 1)
                 x1=x.float().numpy()
                 x_float = torch.from_numpy(x1)
 
                 output = model.forward(x_float)
-                train_loss1 += batch_size * loss(output, y).item()
+
+                print('###################################################################################')
+                print(type(output))
+                print(type(y))
+                print('###################################################################################')
+                print(output)
+                print('###################################################################################')
                 
                 input = torch.zeros((batch_size, 128), dtype=torch.float32)
                 input_mask = torch.zeros((batch_size, 128), dtype=torch.int32)
@@ -55,21 +58,23 @@ def validate(model, data, settings):
                 train_loss += batch_size * loss(output, input, input_mask).item()
 
 
-                pred = output.argmax(dim=1, keepdim=True)
-                train_correct += pred.eq(y.view_as(pred)).sum().item()
+                # pred = output.argmax(dim=1, keepdim=True)
+                # train_correct += pred.eq(y.view_as(pred)).sum().item()
 
 
-                r2 = r2_loss(output, y)
-                r2.backward()
-                mse = mean_squared_error(y, output)
-                r_square = r2_score(y, output)
-                mae=mean_absolute_error(y, output)
+                output1 = torch.squeeze(output['shift_mu'], 2)
+                # r2 = r2_loss(output1, y)
+                # r2.backward()
+                mse = mean_squared_error(np.array(y), np.array(output1)[:, 0])
+                rmse = mean_squared_error(np.array(y), np.array(output1)[:, 0], squared=False)
+                r_square = r2_score(np.array(y), np.array(output1)[:, 0])
+                mae=mean_absolute_error(np.array(y), np.array(output1)[:, 0])
 
             train_loss /= batch_size
             train_loss /= len(dataloader.dataset)
-            train_acc = train_correct / len(dataloader.dataset)
+            # train_acc = train_correct / len(dataloader.dataset)
 
-        return float(train_loss), float(train_acc), float(r2), float(mse), float(r_square), float(mae)
+        return float(train_loss), float(mse), float(rmse),float(r_square), float(mae)
 
     # # Load train data
     # try:
@@ -107,7 +112,7 @@ def validate(model, data, settings):
 
     try:
         # training_loss, training_acc = evaluate(model, loss, train_loader)
-        test_loss, test_acc, r2_, mse1,r2_s, mae1 = evaluate(model, loss, test_loader)
+        test_loss, mse1,rmse,r2_s, mae1 = evaluate(model, loss, test_loader)
 
     except Exception as e:
         print("failed to validate the model {}".format(e), flush=True)
@@ -118,9 +123,8 @@ def validate(model, data, settings):
                 # "training_loss": training_loss,
                 # "training_accuracy": training_acc,
                 "test_loss": test_loss,
-                "test_accuracy": test_acc,
-                "R2": r2_,
                 "MSE": mse1,
+                "RMSE": rmse,
                 "R2_score": r2_s,
                 "MAE": mae1,
             }
