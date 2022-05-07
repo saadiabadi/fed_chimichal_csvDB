@@ -1,6 +1,6 @@
 version: '3.3'
 services:
-  client:
+  client1:
     environment:
       - GET_HOSTS_FROM=dns
     image: "fedchim-pytorch:latest"
@@ -9,5 +9,16 @@ services:
     working_dir: /app
     command: /bin/bash -c "fedn run client -in client.yaml"
     volumes:
-      - ./data/client/:/app/data
+      - ./data/client1/:/app/data
+      - ./client.yaml:/app/client.yaml
+  client2:
+    environment:
+      - GET_HOSTS_FROM=dns
+    image: "fedchim-pytorch:latest"
+    build:
+      context: .
+    working_dir: /app
+    command: /bin/bash -c "fedn run client -in client.yaml"
+    volumes:
+      - ./data/client2/:/app/data
       - ./client.yaml:/app/client.yaml
